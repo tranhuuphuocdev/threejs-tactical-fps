@@ -61,25 +61,31 @@ export function stageShot(name, game, hud) {
     goLive(state, 71);
     state.round.number = 6; state.round.scores = [3, 2];
     // Pump Hall, looking north up the hall toward the Sluice: two Wardens push in.
-    place(player, 19.6, 19.2, 0.06, 0.03);
+    place(player, 23.6, 20.4, -0.02, 0.03);
     arm(player, 'kestrel');
-    place(A[1], 15.4, 17.6, 0.25);
+    place(A[1], 21.0, 17.2, -0.12);
     arm(A[1], 'harrow');
-    place(A[5], 20.3, 13.2, Math.PI + 0.1);
-    place(A[6], 23.6, 11.6, Math.PI - 0.4);
+    place(A[5], 23.2, 12.6, Math.PI + 0.05);
+    place(A[6], 25.3, 11.6, Math.PI - 0.3);
     arm(A[5], 'kestrel'); arm(A[6], 'wasp');
     A[6].vel.set(-2.5, 0, 0.8);
     park(A, [player, A[1], A[5], A[6]]);
     for (const a of [A[1], A[5], A[6]]) a.brain = null;
-    // Script: a controlled burst at the first Warden's chest, then hold.
+    // A smoke blooming at the Sluice doors behind them.
+    const smoke = state.grenades.smokes[0];
+    smoke.active = true; smoke.x = 20 * CELL; smoke.y = 1.6; smoke.z = 8.6 * CELL; smoke.age = 2.5; smoke.life = 16; smoke.radius = 4.6;
+    // Script: a controlled burst at the first Warden's chest while the second returns fire.
     const aimYaw = Math.atan2(A[5].pos.x - player.pos.x, -(A[5].pos.z - player.pos.z));
     return {
       ticks: 26,
       script(i) {
         player.yaw = aimYaw + 0.004; player.prevYaw = player.yaw;
         player.pitch = -0.012;
-        player.intent.fire = i >= 8 && i < 24;
+        player.intent.fire = i >= 10;
         A[6].pos.x -= 0.03;
+        A[6].yaw = Math.atan2(player.pos.x - A[6].pos.x, -(player.pos.z - A[6].pos.z));
+        A[6].pitch = -0.02;
+        A[6].intent.fire = i >= 6;
       },
     };
   }

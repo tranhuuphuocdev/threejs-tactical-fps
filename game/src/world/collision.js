@@ -46,7 +46,6 @@ export function createCollisionWorld() {
 		kind: rect.ch,
 	}));
 
-	// Broad phase: every cell lists the boxes overlapping it.
 	const grid = Array.from({ length: COLS * DEPTH }, () => []);
 	boxes.forEach((box, index) => {
 		for (let r = Math.floor(box.minZ / CELL); r < Math.ceil(box.maxZ / CELL); r += 1) {
@@ -58,7 +57,6 @@ export function createCollisionWorld() {
 	let query = 0;
 	const found = [];
 
-	// Boxes overlapping an XZ rectangle, each once (stamped by query number, no Set per call).
 	function gather(minX, minZ, maxX, maxZ) {
 		query += 1;
 		found.length = 0;
@@ -84,8 +82,6 @@ export function createCollisionWorld() {
 			&& y + height > box.minY && y < box.maxY;
 	}
 
-	// Move a body by its velocity for dt. body: { pos: Vector3 (feet), vel: Vector3, onGround }.
-	// Resolves X, then Z, then Y; a short ledge (stepHeight) is climbed instead of blocking.
 	function moveBody(body, radius, height, dt) {
 		const p = body.pos;
 		const v = body.vel;
@@ -124,7 +120,6 @@ export function createCollisionWorld() {
 				p.y = box.minY - height; v.y = 0;
 			}
 		}
-		// Standing on a box: still supported if one is right under the feet.
 		if (!body.onGround && v.y <= 0) {
 			for (let i = 0; i < list.length; i += 1) {
 				const box = list[i];
@@ -140,13 +135,10 @@ export function createCollisionWorld() {
 		return false;
 	}
 
-	// Can a body of this size stand here? Used to stand up from a crouch.
 	function fits(x, y, z, radius, height) {
 		return !blockedAbove(x, y - 0.01, z, radius, height);
 	}
 
-	// Ray against the boxes and the ground. Returns the distance (or Infinity) and fills normal.
-	// Walks the grid cells along the ray (DDA), testing each cell's boxes once.
 	function raycast(ox, oy, oz, dx, dy, dz, maxDist, normal) {
 		let best = maxDist;
 		let hit = false;
@@ -185,7 +177,6 @@ export function createCollisionWorld() {
 		return hit ? best : Infinity;
 	}
 
-	// Slab test of one box, no allocation: writes the entry distance, axis and face sign to slabOut.
 	const slabOut = { t: 0, axis: -1, sign: 0 };
 	function slabAxis(o, d, mn, mx, k) {
 		if (Math.abs(d) < 1e-9) return o >= mn && o <= mx;

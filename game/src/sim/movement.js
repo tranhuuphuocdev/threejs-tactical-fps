@@ -18,7 +18,6 @@ export function stepMovement(state, actor, dt) {
 	const frozen = state.round.phase === 'freeze' || actor.using > 0;
 	const crouchWanted = intent.crouch || actor.using > 0;
 
-	// Crouch eases in and out; standing up needs headroom.
 	if (crouchWanted) actor.crouching = true;
 	else if (actor.crouching && state.collision.fits(actor.pos.x, actor.pos.y, actor.pos.z, MOVE.radius, MOVE.standHeight)) actor.crouching = false;
 	const crouchTarget = actor.crouching ? 1 : 0;
@@ -30,7 +29,6 @@ export function stepMovement(state, actor, dt) {
 	if (actor.crouching) speed *= MOVE.crouchFactor;
 	else if (intent.walk) speed *= MOVE.walkFactor;
 
-	// Wished direction in world space from the actor's yaw.
 	let f = frozen ? 0 : intent.forward;
 	let r = frozen ? 0 : intent.right;
 	const len = Math.hypot(f, r);
@@ -44,7 +42,6 @@ export function stepMovement(state, actor, dt) {
 
 	const v = actor.vel;
 	if (actor.onGround) {
-		// Friction.
 		const sp = Math.hypot(v.x, v.z);
 		if (sp > 0) {
 			const control = Math.max(sp, MOVE.stopSpeed);
@@ -68,7 +65,6 @@ export function stepMovement(state, actor, dt) {
 	const fallSpeed = -v.y;
 	state.collision.moveBody(actor, MOVE.radius, actor.height, dt);
 
-	// Footsteps: audible when running (not walking or crouching) and on landing hard.
 	const horizontal = Math.hypot(v.x, v.z);
 	if (actor.onGround && horizontal > MOVE.footstepSpeed) {
 		actor.footstep -= dt * horizontal;

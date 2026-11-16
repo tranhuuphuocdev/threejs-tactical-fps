@@ -1,8 +1,8 @@
 // Hitscan against the world and against bodies. A body is four zones measured from its feet:
 // a head sphere and three vertical cylinders (chest, stomach, legs), all scaled by its crouch.
-// What you see is what you hit: the player's shots test each target where it was DRAWN on the
-// last frame (its position interpolated by the frame's alpha), not where the simulation has
-// already moved it, so a shot on a crosshair that sits on a head lands on that head.
+// What you see is what you hit: the player's shots leave the camera's eye and test each target
+// where it was DRAWN on the last frame, not where the simulation has already moved it, so a shot
+// on a crosshair that sits on a head lands on that head.
 import { HITBOX, MOVE } from '../config.js';
 
 const ZONES = ['head', 'chest', 'stomach', 'legs'];
@@ -44,26 +44,17 @@ function raySphere(ox, oy, oz, dx, dy, dz, cx, cy, cz, r, maxT) {
 	return t >= 0 && t <= maxT ? t : -1;
 }
 
-// Where a body stands for this shot: its drawn position for the player's shots, else its live one.
-function bodyPosition(state, shooter, target, out) {
-	if (shooter.isPlayer) {
-		const a = state.viewAlpha;
-		out.x = target.prevPos.x + (target.pos.x - target.prevPos.x) * a;
-		out.y = target.prevPos.y + (target.pos.y - target.prevPos.y) * a;
-		out.z = target.prevPos.z + (target.pos.z - target.prevPos.z) * a;
-	} else {
-		out.x = target.pos.x; out.y = target.pos.y; out.z = target.pos.z;
-	}
-	return out;
+// Where a body stands for this shot: where it was drawn on screen for the player's shots
+// (viewPos, written by the renderer each frame), else its live simulated position.
+function bodyPosition(shooter, target) {
+	return shooter.isPlayer ? target.viewPos : target.pos;
 }
 
-const at = { x: 0, y: 0, z: 0 };
 const zoneHit = { zone: -1 };
 
 // Test one body; returns the entry distance and writes the zone index to hit.zone.
 export function rayBody(ox, oy, oz, dx, dy, dz, px, py, pz, height, maxT, hit) {
 	const s = height / MOVE.standHeight;
-	// Broad phase: the body's bounding cylinder.
 	if (rayCylinder(ox, oy, oz, dx, dy, dz, px, pz, 0.45, py, py + height + 0.1, maxT) < 0) return -1;
 	let best = maxT; let zone = -1;
 	const head = HITBOX.head;
@@ -89,7 +80,7 @@ export function traceShot(state, shooter, ox, oy, oz, dx, dy, dz, range, result)
 	result.hitWorld = Number.isFinite(worldT);
 	for (const target of state.actors) {
 		if (!target.alive || target === shooter || target.team === shooter.team) continue;
-		bodyPosition(state, shooter, target, at);
+		const at = bodyPosition(shooter, target);
 		const t = rayBody(ox, oy, oz, dx, dy, dz, at.x, at.y, at.z, target.height, best, zoneHit);
 		if (t >= 0 && t < best) {
 			best = t; result.victim = target; result.zone = ZONES[zoneHit.zone]; result.hitWorld = false;

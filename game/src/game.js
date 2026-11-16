@@ -41,7 +41,6 @@ export function createGame(seed) {
 		grenades: createGrenadeSystem(),
 		intel: createIntel(),
 		tactics: createTactics(),
-		viewAlpha: 1,           // interpolation alpha of the last rendered frame (for hit tests)
 		fovRad: 1.2,
 		siteAt,
 		endRound: null,
@@ -61,7 +60,6 @@ export function createGame(seed) {
 		startRound(state);
 	}
 
-	// A new round began (from the round system): bots plan, buy and forget the last round.
 	function onRoundBegan() {
 		for (const side of state.intel) for (const s of side) s.t = -99;
 		for (const a of state.actors) if (a.brain) resetBrain(a.brain, state, a);

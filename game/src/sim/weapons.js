@@ -92,7 +92,8 @@ function fireBullet(state, actor, slot) {
 	const radius = cone * Math.sqrt(state.random());
 	dir.addScaledVector(right, Math.cos(angle) * radius).addScaledVector(up, Math.sin(angle) * radius).normalize();
 
-	const ex = actor.pos.x; const ey = actor.pos.y + eyeHeight(actor); const ez = actor.pos.z;
+	const from = actor.isPlayer ? actor.viewPos : actor.pos; // the player fires from the drawn eye
+	const ex = from.x; const ey = from.y + eyeHeight(actor); const ez = from.z;
 	traceShot(state, actor, ex, ey, ez, dir.x, dir.y, dir.z, 200, traceResult);
 	const d = traceResult.distance;
 	const e = state.events.emit('shot');
@@ -174,7 +175,6 @@ export function stepWeapons(state, actor, dt) {
 	if (!slot) { intent.firePressed = false; return; }
 	const def = slot.def;
 
-	// Scope toggles on the aim button for weapons that zoom.
 	if (intent.aimPressed) {
 		if (def.zoom && actor.reloading <= 0) actor.scoped = !actor.scoped;
 		intent.aimPressed = false;

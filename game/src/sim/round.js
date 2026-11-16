@@ -38,13 +38,11 @@ function spawnPoints(state, letter) {
 
 function resetForRound(state, actor, cell, firstRound) {
 	if (!actor.alive || firstRound) {
-		// Dead (or a new half): back to a sidearm, no armour.
 		actor.primary.def = null;
 		giveWeapon(actor.sidearm, 'hornet');
 		actor.armor = 0; actor.helmet = false; actor.kit = false;
 		actor.grenades.frag = 0; actor.grenades.smoke = 0; actor.grenades.flash = 0;
 	} else {
-		// Survivors keep their kit and refill ammo.
 		if (actor.primary.def) giveWeapon(actor.primary, actor.primary.def.id);
 		giveWeapon(actor.sidearm, actor.sidearm.def.id);
 	}
@@ -52,6 +50,7 @@ function resetForRound(state, actor, cell, firstRound) {
 	actor.health = 100;
 	actor.pos.set((cell[0] + 0.5) * CELL, 0, (cell[1] + 0.5) * CELL);
 	actor.prevPos.copy(actor.pos);
+	actor.viewPos.copy(actor.pos);
 	actor.vel.set(0, 0, 0);
 	actor.yaw = actor.team === TEAM.RAIDERS ? 0 : Math.PI;
 	actor.prevYaw = actor.yaw;
@@ -87,7 +86,6 @@ export function startRound(state) {
 		const letter = a.team === TEAM.RAIDERS ? 'T' : 'D';
 		resetForRound(state, a, points[letter][used[letter]++], first || half);
 	}
-	// The charge goes to the player when they attack, else to a random Raider.
 	const raiders = state.actors.filter((a) => a.team === TEAM.RAIDERS);
 	const carrier = raiders.find((a) => a.isPlayer) ?? raiders[Math.floor(state.random() * raiders.length)];
 	carrier.hasCharge = true;
@@ -119,7 +117,6 @@ export function stepRound(state, dt) {
 			else if (!wardensAlive) endRound(state, TEAM.RAIDERS, 'Wardens eliminated');
 			else if (round.timer <= 0) endRound(state, TEAM.WARDENS, 'Time ran out');
 		}
-		// Once planted, the round ends only on the cut or the blast (objective.js), as the fuse burns.
 		return;
 	}
 	if (round.phase === 'post' && round.timer <= 0) {

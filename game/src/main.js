@@ -16,11 +16,10 @@ import { hear } from './bots/perception.js';
 import { buy } from './sim/shop.js';
 import { eyeHeight, viewDirection } from './core/actors.js';
 import { buildScene, makeEnvironment } from './world/scene-builder.js';
+import { createTextures } from './world/textures.js';
 import { createBodies } from './view/bodies.js';
 import { createEffects } from './view/effects.js';
 import { createViewmodel } from './view/viewmodel.js';
-import { createTextures } from './world/textures.js';
-import { createAudio } from './view/audio.js';
 import { PALETTE } from './palette.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -36,7 +35,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.autoClear = false;
@@ -51,11 +50,13 @@ const textures = createTextures(renderer);
 const game = createGame(seed);
 const { state, player } = game;
 const environment = makeEnvironment(renderer);
-buildScene(scene, state.collision, textures, { shadowMap: 2048, environment });
+buildScene(scene, state.collision, textures, { shadowMap: 4096, environment });
 const bodies = createBodies(scene, state.actors);
 const viewmodel = createViewmodel(textures, environment);
 const effects = createEffects(scene, textures);
-const audio = createAudio();
+// Audio loads on the first DEPLOY click (browsers only start sound after a gesture anyway).
+const audio = { start() {}, onEvent() {}, setListener() {}, roundEnd() {} };
+const audioReady = import('./view/audio.js').then(({ createAudio }) => Object.assign(audio, createAudio()));
 const hud = createHud(state.actors, (id) => buy(state, player, id));
 const input = createInput(renderer.domElement, onLockChange);
 const control = createPlayerControl(input, hud);
@@ -81,7 +82,7 @@ for (const b of document.querySelectorAll('#skill-pick button')) {
 	});
 }
 playButton.addEventListener('click', () => {
-	audio.start();
+	audioReady.then(() => audio.start());
 	if (!matchStarted || state.round.phase === 'over') {
 		game.newMatch(chosenSide, chosenSkill);
 		matchStarted = true;
@@ -132,9 +133,16 @@ viewmodel.camera.updateProjectionMatrix();
 // Who the camera follows: the player, or a living teammate while the player is dead.
 function viewTarget() {
 	if (player.alive || !matchStarted) return player;
-	const mates = state.actors.filter((a) => a.alive && a.team === player.team && !a.isPlayer);
-	if (mates.length === 0) return player;
-	return mates[spectateIndex % mates.length];
+	let alive = 0;
+	for (const a of state.actors) if (a.alive && a.team === player.team && !a.isPlayer) alive += 1;
+	if (alive === 0) return player;
+	let pick = spectateIndex % alive;
+	for (const a of state.actors) {
+		if (!a.alive || a.team !== player.team || a.isPlayer) continue;
+		if (pick === 0) return a;
+		pick -= 1;
+	}
+	return player;
 }
 
 function drainEvents() {
@@ -154,6 +162,12 @@ function drainEvents() {
 			case 'live': hud.message('Go', '', 1); control.toggleBuy(state, player, false); break;
 			case 'planted': hud.message(`Charge armed at Pump ${e.text}`, player.team === TEAM.WARDENS ? 'Retake the site and cut it' : 'Hold the site for 40 seconds', 3); break;
 			case 'defused': hud.message('Charge cut', '', 2); break;
+			case 'radio': {
+				const from = state.actors[e.actor];
+				const side = from ? from.team : e.other;
+				if (side === player.team && e.actor !== player.id) hud.radio(from ? from.name : 'Squad', e.text);
+				break;
+			}
 			case 'chargeDropped': if (player.team === TEAM.RAIDERS) hud.message('', 'The charge was dropped', 1.5); break;
 			case 'roundEnd': {
 				const won = e.amount === player.squad;
@@ -198,13 +212,12 @@ function simulate(dt) {
 
 // Everything the frame shows, at interpolation alpha: camera, figures, weapon, effects, HUD.
 function present(dt, alpha) {
-	state.viewAlpha = alpha;
+	for (const a of state.actors) a.viewPos.lerpVectors(a.prevPos, a.pos, alpha);
 	const viewer = viewTarget();
 	const spectating = viewer !== player;
 	bodies.update(state, alpha, state.time - DT + alpha * DT, player.alive && !spectating);
-	camPos.lerpVectors(viewer.prevPos, viewer.pos, alpha);
+	camPos.copy(viewer.viewPos);
 	if (spectating) {
-		// Over the shoulder of a teammate.
 		viewDirection(viewer.yaw, -0.18, forward);
 		camera.position.set(camPos.x - forward.x * 2.6, camPos.y + 2.1, camPos.z - forward.z * 2.6);
 		camera.rotation.set(-0.22, -viewer.yaw, 0);
@@ -225,7 +238,6 @@ function present(dt, alpha) {
 	viewDirection(viewer.yaw, viewer.pitch, forward);
 	audio.setListener(camera.position, forward);
 
-	// Weapon pose, then the muzzle point for this frame's tracers.
 	const def = slot.def ?? WEAPONS.hornet;
 	let modelKey = player.sidearm.def?.model ?? 'pistol';
 	if (player.active === 4) modelKey = 'grenade';
@@ -268,8 +280,6 @@ function frame(now) {
 }
 
 if (shot) {
-	// Capture mode, driven by tools/shoot.mjs: the tool stages a scene through this hook with the
-	// game's own systems, runs its scripted ticks here at a fixed step, and this draws the result.
 	overlay.hidden = true;
 	matchStarted = true;
 	window.__saltline = {

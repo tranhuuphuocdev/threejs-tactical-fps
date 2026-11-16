@@ -1,6 +1,6 @@
 // World effects driven by simulation events: tracers, bullet holes, impact dust and sparks,
 // blood, grenade and charge models, smoke clouds, explosions and their light. Every object is
-// pooled at load (tracers in one line buffer, holes in one instanced mesh, particles in two
+// pooled at load (tracer rods, holes in one instanced mesh, particles in two
 // point clouds), so the busiest firefight renders with the same allocations as an empty map.
 import * as THREE from 'three';
 import { createParticles } from './particles.js';
@@ -19,23 +19,18 @@ export function createEffects(scene, textures) {
 	const dust = createParticles(scene, textures.puff, 1400, false);
 	const glow = createParticles(scene, textures.puff, 600, true);
 
-	// Tracers: short bright streaks that travel from muzzle to impact in a few frames.
-	const tracerPos = new Float32Array(TRACERS * 6);
-	const tracerCol = new Float32Array(TRACERS * 6);
-	const tracerGeo = new THREE.BufferGeometry();
-	const tracerPosAttr = new THREE.BufferAttribute(tracerPos, 3).setUsage(THREE.DynamicDrawUsage);
-	const tracerColAttr = new THREE.BufferAttribute(tracerCol, 3).setUsage(THREE.DynamicDrawUsage);
-	tracerGeo.setAttribute('position', tracerPosAttr);
-	tracerGeo.setAttribute('color', tracerColAttr);
-	const tracerLines = new THREE.LineSegments(tracerGeo, new THREE.LineBasicMaterial({
-		vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
-	}));
-	tracerLines.frustumCulled = false;
-	scene.add(tracerLines);
-	const tracers = Array.from({ length: TRACERS }, () => ({ t: 1, life: 0.1, sx: 0, sy: 0, sz: 0, ex: 0, ey: 0, ez: 0 }));
+	// Tracers: thin glowing rods, one pooled mesh each, stretched between the streak's tail and head.
+	const tracerGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0, 0.5);
+	const tracers = Array.from({ length: TRACERS }, () => {
+		const mesh = new THREE.Mesh(tracerGeo, new THREE.MeshBasicMaterial({
+			color: '#ffd38a', transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+		}));
+		mesh.visible = false; mesh.frustumCulled = false;
+		scene.add(mesh);
+		return { mesh, t: 1, life: 0.1, sx: 0, sy: 0, sz: 0, ex: 0, ey: 0, ez: 0 };
+	});
 	let tracerNext = 0;
 
-	// Bullet holes: one instanced quad, oldest overwritten first.
 	const holeTex = makeHoleTexture();
 	const holes = new THREE.InstancedMesh(
 		new THREE.PlaneGeometry(0.11, 0.11),
@@ -47,7 +42,6 @@ export function createEffects(scene, textures) {
 	scene.add(holes);
 	let holeNext = 0;
 
-	// Grenade bodies and the charge.
 	const grenadeGeo = new THREE.SphereGeometry(0.07, 10, 8);
 	const grenadeMats = {
 		frag: new THREE.MeshStandardMaterial({ color: '#4d5538', roughness: 0.6 }),
@@ -68,8 +62,6 @@ export function createEffects(scene, textures) {
 	charge.visible = false;
 	scene.add(charge);
 
-	// One light for explosions and one for distant muzzle flashes; always present (intensity 0),
-	// so turning them on never changes the shader's light count and never recompiles.
 	const blastLight = new THREE.PointLight('#ffb062', 0, 26, 1.6);
 	const muzzleLight = new THREE.PointLight('#ffc070', 0, 9, 2);
 	scene.add(blastLight, muzzleLight);
@@ -135,7 +127,6 @@ export function createEffects(scene, textures) {
 		blastT = 0.15;
 	}
 
-	// Event handling. playerId: whose shots start at the viewmodel's muzzle; muzzle: that point.
 	function onEvent(e, state, playerId, muzzle) {
 		switch (e.type) {
 			case 'shot': {
@@ -143,7 +134,7 @@ export function createEffects(scene, textures) {
 				const sx = own ? muzzle.x : e.x; const sy = own ? muzzle.y : e.y - 0.12; const sz = own ? muzzle.z : e.z;
 				addTracer(sx, sy, sz, e.x2, e.y2, e.z2);
 				if (e.flag) { impact(e.x2, e.y2, e.z2, e.nx, e.ny, e.nz); addHole(e.x2, e.y2, e.z2, e.nx, e.ny, e.nz); }
-				if (e.other >= 0) blood(e.x2, e.y2, e.z2, e.head);
+				if (e.other >= 0 && e.other !== playerId) blood(e.x2, e.y2, e.z2, e.head);
 				if (!own) { muzzleLight.position.set(e.x, e.y, e.z); muzzleT = 0.05; }
 				break;
 			}
@@ -163,22 +154,22 @@ export function createEffects(scene, textures) {
 
 	let smokeTick = 0;
 	function update(dt, state, camera, pixelScale) {
-		// Tracers.
 		for (let i = 0; i < TRACERS; i += 1) {
 			const tr = tracers[i];
-			const o = i * 6;
-			if (tr.t >= 1) { tracerCol.fill(0, o, o + 6); continue; }
+			if (tr.t >= 1) { tr.mesh.visible = false; continue; }
 			tr.t = Math.min(1, tr.t + dt / tr.life);
 			const head = Math.min(1, tr.t * 1.25); const tail = Math.max(0, tr.t * 1.25 - 0.35);
-			tracerPos[o] = tr.sx + (tr.ex - tr.sx) * tail; tracerPos[o + 1] = tr.sy + (tr.ey - tr.sy) * tail; tracerPos[o + 2] = tr.sz + (tr.ez - tr.sz) * tail;
-			tracerPos[o + 3] = tr.sx + (tr.ex - tr.sx) * head; tracerPos[o + 4] = tr.sy + (tr.ey - tr.sy) * head; tracerPos[o + 5] = tr.sz + (tr.ez - tr.sz) * head;
-			const fade = 1 - tr.t;
-			tracerCol[o] = 0.55 * fade; tracerCol[o + 1] = 0.4 * fade; tracerCol[o + 2] = 0.18 * fade;
-			tracerCol[o + 3] = 1.0 * fade; tracerCol[o + 4] = 0.85 * fade; tracerCol[o + 5] = 0.5 * fade;
+			const m = tr.mesh;
+			m.position.set(tr.sx + (tr.ex - tr.sx) * tail, tr.sy + (tr.ey - tr.sy) * tail, tr.sz + (tr.ez - tr.sz) * tail);
+			vA.set(tr.sx + (tr.ex - tr.sx) * head, tr.sy + (tr.ey - tr.sy) * head, tr.sz + (tr.ez - tr.sz) * head);
+			const len = m.position.distanceTo(vA);
+			m.visible = len > 0.01;
+			m.lookAt(vA);
+			const thick = 0.012 + 0.004 * m.position.distanceTo(camera.position) / 10;
+			m.scale.set(thick, thick, len);
+			m.material.opacity = 1 - tr.t * 0.6;
 		}
-		tracerPosAttr.needsUpdate = true; tracerColAttr.needsUpdate = true;
 
-		// Grenades and the charge.
 		const items = state.grenades.items;
 		for (let i = 0; i < items.length; i += 1) {
 			const g = items[i]; const m = grenadeMeshes[i];
@@ -195,7 +186,6 @@ export function createEffects(scene, textures) {
 			chargeLed.visible = c.state !== 'planted' || c.beep > 0.06 || c.fuse < 3;
 		}
 
-		// Smoke clouds: keep each active cloud dense by topping up its puffs.
 		smokeTick -= dt;
 		if (smokeTick <= 0) {
 			smokeTick = 0.09;
@@ -222,7 +212,7 @@ export function createEffects(scene, textures) {
 		return shake;
 	}
 
-	return { onEvent, update, impact, explosion, addTracer, objects: [tracerLines, holes, charge, ...grenadeMeshes, dust.points, glow.points] };
+	return { onEvent, update, impact, explosion, addTracer, objects: [holes, charge, ...grenadeMeshes, dust.points, glow.points] };
 }
 
 function makeHoleTexture() {

@@ -16,7 +16,6 @@ export function createPlayerControl(input, hud) {
 		if (next && can) input.exitLock(); else if (!input.state.locked) input.requestLock();
 	}
 
-	// Called once per tick with the player actor.
 	function apply(state, player) {
 		const it = player.intent;
 		const menu = hud.buyVisible;

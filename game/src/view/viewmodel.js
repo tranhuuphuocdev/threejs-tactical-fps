@@ -9,7 +9,7 @@ import { buildGunModels, createGunMaterials } from './gun-models.js';
 export function createViewmodel(textures, environment) {
 	const scene = new THREE.Scene();
 	scene.environment = environment;
-	scene.environmentIntensity = 0.9;
+	scene.environmentIntensity = 0.55;
 	const camera = new THREE.PerspectiveCamera(52, 1, 0.01, 10);
 	scene.add(new THREE.HemisphereLight('#f4ecdf', '#6b5a45', 1.6));
 	const key = new THREE.DirectionalLight('#ffe2b5', 1.8);
@@ -52,14 +52,11 @@ export function createViewmodel(textures, environment) {
 			s.flashT = 0.05;
 			flash.material.rotation = Math.random() * Math.PI;
 		},
-		// dt: frame seconds. view: { modelKey, speed, onGround, reload (0..1 or -1), switching (0..1), lookX, lookY, scoped, crouch }
 		update(dt, view) {
 			show(view.modelKey);
 			holder.visible = !view.scoped && view.visible;
-			// Kick spring: a stiff, damped spring so each shot snaps back before the next.
 			s.kickV += (-s.kick * 220 - s.kickV * 22) * dt;
 			s.kick += s.kickV * dt;
-			// Sway trails the mouse; bob follows stride.
 			s.swayX += (-view.lookX * 0.9 - s.swayX) * Math.min(1, dt * 10);
 			s.swayY += (view.lookY * 0.9 - s.swayY) * Math.min(1, dt * 10);
 			const stride = view.onGround ? Math.min(1, view.speed / 6) : 0.15;
@@ -82,12 +79,10 @@ export function createViewmodel(textures, environment) {
 			flashLight.position.copy(muzzle);
 			flashLight.intensity = s.flashT > 0 ? 0.35 : 0;
 		},
-		// The muzzle's position in world space, for the start of the player's tracers.
 		muzzleWorld(worldCamera, out) {
 			out.copy(muzzle);
 			holder.updateMatrixWorld();
 			out.applyMatrix4(holder.matrixWorld);
-			// Viewmodel space is camera space: carry it into the world camera's frame.
 			return worldCamera.localToWorld(out);
 		},
 	};

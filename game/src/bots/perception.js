@@ -7,7 +7,6 @@ import { eyeHeight } from '../core/actors.js';
 const SIGHT_HEIGHTS = [1.58, 1.15]; // head, then chest
 
 export function createIntel() {
-	// Per side: last known enemy sighting, one slot per enemy actor id.
 	return [0, 1].map(() => Array.from({ length: TEAM_SIZE * 2 }, () => ({ x: 0, z: 0, t: -99 })));
 }
 

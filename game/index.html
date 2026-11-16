@@ -4,128 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SALTLINE: a round-based tactical shooter</title>
-<style>
-/* Look plan: dark glass panels over a bright salt-white world; ink text; one hazard-orange accent for the objective; Raiders orange, Wardens teal. */
-:root {--canvas:#101316;--panel:rgba(16,19,22,0.72);--panel-solid:#171b1f;--hairline:rgba(255,255,255,0.12);--ink:#f1ede4;--muted:#a3a9ad;--accent:#f07a1a;--danger:#ff4a3a;--raiders:#e0703f;--wardens:#48a9b8;--font-ui:system-ui,-apple-system,'Segoe UI',sans-serif;--font-num:ui-monospace,'SF Mono',Menlo,Consolas,monospace;--gap:6px;}
-*{box-sizing:border-box;}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--canvas);color:var(--ink);font-family:var(--font-ui);user-select:none;}
-#game,#game canvas{position:fixed;inset:0;display:block;width:100%;height:100%;}
-#hud{position:fixed;inset:0;pointer-events:none;}
-.panel{background:var(--panel);border:1px solid var(--hairline);border-radius:6px;backdrop-filter:blur(6px);}
-#crosshair{position:fixed;left:50%;top:50%;width:0;height:0;}
-#crosshair i{position:absolute;background:#9ff7a6;box-shadow:0 0 0 1px rgba(0,0,0,.55);}
-#crosshair i:nth-child(1){width:2px;height:8px;left:-1px;bottom:var(--gap);}
-#crosshair i:nth-child(2){width:2px;height:8px;left:-1px;top:var(--gap);}
-#crosshair i:nth-child(3){height:2px;width:8px;top:-1px;right:var(--gap);}
-#crosshair i:nth-child(4){height:2px;width:8px;top:-1px;left:var(--gap);}
-#crosshair b{position:absolute;width:2px;height:2px;left:-1px;top:-1px;background:#9ff7a6;}
-#hitmarker{position:fixed;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%) rotate(45deg);opacity:0;}
-#hitmarker.on{opacity:1;}
-#hitmarker i{position:absolute;background:var(--ink);}
-#hitmarker.head i{background:var(--danger);}
-#hitmarker i:nth-child(1){left:14px;top:0;width:2px;height:9px;}
-#hitmarker i:nth-child(2){left:14px;bottom:0;width:2px;height:9px;}
-#hitmarker i:nth-child(3){top:14px;left:0;height:2px;width:9px;}
-#hitmarker i:nth-child(4){top:14px;right:0;height:2px;width:9px;}
-#topbar{position:fixed;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:stretch;gap:8px;}
-.score{min-width:150px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;}
-.score.us{align-items:flex-end;text-align:right;}
-.score .row{display:flex;align-items:baseline;gap:10px;}
-.score.us .row{flex-direction:row-reverse;}
-.score b{font-family:var(--font-num);font-size:30px;line-height:1;font-weight:600;}
-.side{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
-.side.raiders{color:var(--raiders);}
-.side.wardens{color:var(--wardens);}
-.who{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
-.pips{display:flex;gap:4px;}
-.pips i{width:10px;height:4px;border-radius:2px;background:rgba(255,255,255,.15);}
-.us .pips i.on{background:var(--ink);}
-.them .pips i.on{background:var(--danger);}
-#timer-box{padding:8px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:104px;}
-#timer{font-family:var(--font-num);font-size:28px;font-weight:600;line-height:1;}
-#round-no{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.08em;text-transform:uppercase;}
-#timer-box.low #timer{color:var(--danger);}
-#timer-box.freeze #timer{color:var(--muted);}
-#timer-box.planted{border-color:var(--accent);background:rgba(240,122,26,.25);}
-#timer-box.planted #timer::before{content:'CHARGE ARMED';font-size:13px;letter-spacing:.1em;color:var(--accent);font-family:var(--font-ui);font-weight:800;}
-#vitals{position:fixed;left:20px;bottom:18px;display:flex;gap:8px;align-items:stretch;}
-.stat{padding:8px 14px;display:flex;align-items:baseline;gap:8px;}
-.stat label{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
-.stat b{font-family:var(--font-num);font-size:34px;font-weight:600;line-height:1;}
-.stat.helmet label::after{content:' + helmet';}
-#money-box b{color:#9fe39d;font-size:24px;}
-#charge-icon{padding:8px 12px;color:var(--accent);font-weight:800;letter-spacing:.08em;font-size:12px;display:flex;align-items:center;}
-#ammo-box{position:fixed;right:20px;bottom:18px;padding:10px 16px;text-align:right;min-width:210px;}
-.ammo{display:flex;align-items:baseline;justify-content:flex-end;gap:8px;}
-.ammo #mag{font-family:var(--font-num);font-size:46px;font-weight:600;line-height:1;}
-.ammo #reserve{font-family:var(--font-num);font-size:17px;color:var(--muted);}
-.ammo.low #mag{color:var(--accent);}
-.ammo.empty #mag{color:var(--danger);}
-#weapon-name{font-size:13px;color:var(--muted);margin-top:4px;}
-#nades{font-size:14px;letter-spacing:3px;color:var(--ink);margin-top:4px;min-height:16px;}
-#mini-box{position:fixed;top:14px;left:14px;padding:6px;}
-#minimap{display:block;width:200px;height:160px;border-radius:4px;}
-#place{font-size:12px;color:var(--ink);padding:6px 2px 0;letter-spacing:.04em;min-height:20px;}
-#feed{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
-.feed-row{background:var(--panel);border:1px solid var(--hairline);border-radius:4px;padding:5px 10px;font-size:13px;display:flex;gap:8px;align-items:center;}
-.feed-row.mine{border-color:var(--danger);}
-.feed-row .w{color:var(--muted);font-size:12px;}
-#center{position:fixed;left:50%;top:24%;transform:translateX(-50%);text-align:center;}
-#center-msg{font-size:34px;font-weight:800;letter-spacing:.02em;text-shadow:0 2px 14px rgba(0,0,0,.6);}
-#center-sub{font-size:15px;color:var(--ink);opacity:.85;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.7);}
-#hint{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);font-size:14px;padding:6px 12px;background:var(--panel);border-radius:4px;}
-#hint:empty{display:none;}
-#spectate{position:fixed;left:50%;bottom:160px;transform:translateX(-50%);font-size:16px;font-weight:700;padding:6px 14px;background:var(--panel);border-radius:4px;}
-#progress{position:fixed;left:50%;top:62%;transform:translateX(-50%);width:300px;padding:10px 12px;}
-#progress-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-#progress-track{height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;}
-#progress-fill{height:100%;width:0;background:var(--accent);}
-#damage-ring{position:fixed;left:50%;top:50%;width:260px;height:260px;margin:-130px 0 0 -130px;opacity:0;}
-#damage-ring::before{content:'';position:absolute;left:50%;top:0;width:60px;height:14px;margin-left:-30px;border-radius:0 0 30px 30px;background:linear-gradient(var(--danger),transparent);}
-#vignette{position:fixed;inset:0;opacity:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(160,10,0,.65) 100%);}
-#flash{position:fixed;inset:0;background:#fffdf6;opacity:0;}
-#scope{position:fixed;inset:0;background:radial-gradient(circle at center,transparent 0,transparent 34vh,#000 34.2vh);}
-#scope::before,#scope::after{content:'';position:absolute;background:#000;}
-#scope::before{left:0;right:0;top:50%;height:1px;}
-#scope::after{top:0;bottom:0;left:50%;width:1px;}
-#fps{position:fixed;right:14px;bottom:120px;font-family:var(--font-num);font-size:11px;color:var(--muted);}
-.overlay{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:rgba(10,12,14,.55);pointer-events:auto;}
-.overlay[hidden],[hidden]{display:none !important;}
-.card{width:min(560px,100%);background:var(--panel-solid);border:1px solid var(--hairline);border-radius:8px;padding:28px;}
-.card h1{margin:0;font-size:44px;letter-spacing:.06em;font-weight:900;}
-.card h1 span{color:var(--accent);}
-.card p{color:var(--muted);line-height:1.5;margin:10px 0 18px;}
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.choice{font:inherit;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--hairline);background:rgba(255,255,255,.03);color:var(--ink);cursor:pointer;}
-.choice b{display:block;font-size:16px;margin-bottom:2px;}
-.choice small{color:var(--muted);}
-.choice[aria-pressed="true"]{border-color:var(--accent);background:rgba(240,122,26,.12);}
-.choice.raiders b{color:var(--raiders);} .choice.wardens b{color:var(--wardens);}
-.seg{display:flex;gap:6px;margin-bottom:18px;}
-.seg button{flex:1;font:inherit;padding:8px;border-radius:6px;border:1px solid var(--hairline);background:transparent;color:var(--muted);cursor:pointer;}
-.seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink);}
-#play{width:100%;font:inherit;font-weight:800;letter-spacing:.06em;padding:14px;border:0;border-radius:6px;background:var(--accent);color:#1a0f05;cursor:pointer;font-size:16px;}
-#play:hover{filter:brightness(1.08);}
-.keys{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin:18px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted);}
-kbd{display:inline-block;min-width:22px;padding:1px 6px;margin-right:4px;border:1px solid var(--hairline);border-radius:4px;font-family:var(--font-num);font-size:11px;color:var(--ink);text-align:center;}
-#buy .card{width:min(620px,100%);}
-#buy h2{margin:0 0 4px;font-size:22px;display:flex;justify-content:space-between;}
-#buy-money{color:#9fe39d;font-family:var(--font-num);}
-#buy-note{color:var(--muted);font-size:13px;margin-bottom:12px;}
-#buy-list{display:grid;gap:4px;}
-.buy-item{display:grid;grid-template-columns:34px 1fr auto 70px;align-items:center;gap:10px;text-align:left;font:inherit;padding:8px 10px;border-radius:5px;border:1px solid var(--hairline);background:rgba(255,255,255,.03);color:var(--ink);cursor:pointer;}
-.buy-item:hover{border-color:var(--accent);}
-.buy-item .s{color:var(--muted);font-size:12px;}
-.buy-item .p{font-family:var(--font-num);text-align:right;color:#9fe39d;}
-.buy-item.off{opacity:.38;}
-#board .card{width:min(640px,100%);}
-#board table{width:100%;border-collapse:collapse;font-size:14px;}
-#board th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:4px 8px;}
-#board td{padding:6px 8px;border-top:1px solid var(--hairline);font-family:var(--font-num);}
-#board td.n{font-family:var(--font-ui);font-weight:600;}
-#board tr.raiders td.n{color:var(--raiders);} #board tr.wardens td.n{color:var(--wardens);}
-#board tr.dead{opacity:.45;} #board tr.me td{background:rgba(255,255,255,.05);}
-</style>
+<link rel="stylesheet" href="./style.css">
 </head>
 <body>
 <div id="game"></div>
@@ -148,6 +27,7 @@ kbd{display:inline-block;min-width:22px;padding:1px 6px;margin-right:4px;border:
   <div id="center" hidden><div id="center-msg"></div><div id="center-sub"></div></div>
   <div id="spectate" hidden></div>
   <div id="hint"></div>
+  <div id="radio" class="panel" hidden><b>RADIO</b> <span id="radio-who"></span>: <span id="radio-text"></span></div>
   <div id="progress" class="panel" hidden><div id="progress-label"></div><div id="progress-track"><div id="progress-fill"></div></div></div>
 
   <div id="vitals">

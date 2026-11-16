@@ -13,7 +13,7 @@ const opt = (name, fallback) => { const i = args.indexOf(name); return i >= 0 ? 
 const outDir = opt('--out', 'screenshots');
 const chromePath = opt('--chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const base = opt('--base', 'http://localhost:8080/');
-const quality = Number(opt('--quality', '82'));
+const quality = Number(opt('--quality', '94'));
 const shots = JSON.parse(readFileSync(new URL('../shots.json', import.meta.url), 'utf8'));
 const port = 9333;
 

@@ -1,10 +1,10 @@
 // The look plan: a sun-bleached salt compound at late afternoon. Warm whites and sand for the
 // world, one hazard orange accent for the objective, and two team colours that read against both.
 export const PALETTE = Object.freeze({
-	sky: '#c9d6dc',
-	skyHorizon: '#efe2c8',
-	fog: '#e2d8c4',
-	sun: '#ffe2b5',
+	sky: '#6f8fae',
+	skyHorizon: '#f4b47c',
+	fog: '#e9c39a',
+	sun: '#ffc283',
 	ground: '#d8c9a8',
 	groundDark: '#a8987a',
 	salt: '#f1ede4',

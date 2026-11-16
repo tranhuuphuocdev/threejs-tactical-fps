@@ -5,7 +5,7 @@
 import { TEAM, TEAM_NAME, WEAPONS, ROUND, GRENADES } from '../config.js';
 import { CATALOG, priceOf, nameOf, refusal, buyOpen } from '../sim/shop.js';
 import { activeSlot } from '../core/actors.js';
-import { ROWS, COLS, DEPTH, CELL, CALLOUTS } from '../map/layout.js';
+import { ROWS, COLS, DEPTH, CELL, calloutAt } from '../map/layout.js';
 import { PALETTE } from '../palette.js';
 import { inaccuracy } from '../sim/weapons.js';
 
@@ -17,12 +17,6 @@ function fmtTime(t) {
 	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export function calloutAt(x, z) {
-	const c = x / CELL; const r = z / CELL;
-	for (const area of CALLOUTS) if (c >= area.c0 && c < area.c1 + 1 && r >= area.r0 && r < area.r1 + 1) return area.name;
-	return '';
-}
-
 export function createHud(actors, onBuy) {
 	const el = {
 		health: $('hp'), armor: $('ap'), money: $('money'), mag: $('mag'), reserve: $('reserve'), weapon: $('weapon-name'),
@@ -31,7 +25,7 @@ export function createHud(actors, onBuy) {
 		feed: $('feed'), center: $('center-msg'), centerSub: $('center-sub'), progress: $('progress'), progressFill: $('progress-fill'),
 		progressLabel: $('progress-label'), crosshair: $('crosshair'), hitmarker: $('hitmarker'), damage: $('damage-ring'),
 		flash: $('flash'), scope: $('scope'), buy: $('buy'), buyList: $('buy-list'), buyMoney: $('buy-money'), buyNote: $('buy-note'),
-		board: $('board'), boardBody: $('board-body'), hint: $('hint'), place: $('place'), spectate: $('spectate'),
+		board: $('board'), boardBody: $('board-body'), hint: $('hint'), radio: $('radio'), radioWho: $('radio-who'), radioText: $('radio-text'), place: $('place'), spectate: $('spectate'),
 		grenades: $('nades'), charge: $('charge-icon'), timerBox: $('timer-box'), vignette: $('vignette'), fps: $('fps'),
 	};
 	const last = new Map();
@@ -44,11 +38,9 @@ export function createHud(actors, onBuy) {
 		else node.style.setProperty(prop, value);
 	}
 
-	// Alive pips: five per side, made once.
 	const pips = [el.pipsUs, el.pipsThem].map((box) => Array.from({ length: 5 }, () => {
 		const i = document.createElement('i'); box.appendChild(i); return i;
 	}));
-	// Kill feed rows, made once and recycled.
 	const feedRows = Array.from({ length: FEED_ROWS }, () => {
 		const row = document.createElement('div'); row.className = 'feed-row'; row.hidden = true;
 		row.innerHTML = '<b class="k"></b><span class="w"></span><b class="v"></b>';
@@ -57,7 +49,6 @@ export function createHud(actors, onBuy) {
 	});
 	let feedNext = 0;
 
-	// Buy menu rows.
 	const buyRows = CATALOG.map((item) => {
 		const b = document.createElement('button');
 		b.type = 'button'; b.className = 'buy-item';
@@ -69,7 +60,6 @@ export function createHud(actors, onBuy) {
 		return { item, b };
 	});
 
-	// Scoreboard rows: one per actor.
 	const boardRows = actors.map(() => {
 		const tr = document.createElement('tr');
 		tr.innerHTML = '<td class="n"></td><td></td><td></td><td></td><td></td>';
@@ -77,7 +67,6 @@ export function createHud(actors, onBuy) {
 		return tr;
 	});
 
-	// Minimap: the map drawn once to an offscreen canvas, then dots each refresh.
 	const mini = $('minimap'); const mctx = mini.getContext('2d');
 	const scale = mini.width / (COLS * CELL);
 	const base = document.createElement('canvas'); base.width = mini.width; base.height = mini.height;
@@ -100,7 +89,6 @@ export function createHud(actors, onBuy) {
 		for (const a of actors) {
 			if (!a.alive) continue;
 			const ally = a.team === viewer.team;
-			// Enemies show only while someone on your side saw them in the last 2 s.
 			if (!ally && state.time - board[a.id].t > 2) continue;
 			const x = (ally ? a.pos.x : board[a.id].x) * scale; const z = (ally ? a.pos.z : board[a.id].z) * scale;
 			mctx.fillStyle = ally ? (a === viewer ? '#ffffff' : (a.team === TEAM.RAIDERS ? PALETTE.raiders : PALETTE.wardens)) : '#ff3b2f';
@@ -120,6 +108,7 @@ export function createHud(actors, onBuy) {
 	}
 
 	let hitT = 0; let hitHead = false;
+	let radioT = 0;
 	let messageT = 0;
 
 	function feed(killer, victim, weapon, head, playerId) {
@@ -142,13 +131,16 @@ export function createHud(actors, onBuy) {
 
 	return {
 		feed, message,
+		radio(who, text) {
+			el.radioWho.textContent = who; el.radioText.textContent = text;
+			el.radio.hidden = false; radioT = 3.5;
+		},
 		hitMarker(head) { hitT = 0.22; hitHead = head; },
 		setBuyOpen(open) { set(el.buy, 'buyOpen', !open, 'hidden'); },
 		get buyVisible() { return !el.buy.hidden; },
 		setBoard(open) { set(el.board, 'board', !open, 'hidden'); },
 		showFps(fps) { set(el.fps, 'fps', `${fps} fps`); },
 
-		// viewer: the actor whose view is shown (the player, or a teammate when spectating).
 		update(state, player, viewer, dt, spectating) {
 			const round = state.round;
 			const us = player.squad; const them = 1 - us;
@@ -193,7 +185,6 @@ export function createHud(actors, onBuy) {
 			set(el.spectate, 'sp', spectating ? `Spectating ${v.name}` : '', 'textContent');
 			set(el.spectate, 'sph', !spectating, 'hidden');
 
-			// Crosshair gap follows the real spread cone, in pixels at the current FOV.
 			const cone = v.alive ? inaccuracy(v) : 0;
 			const px = Math.round(4 + cone * window.innerHeight / (2 * Math.tan(state.fovRad / 2)));
 			set(el.crosshair, 'gap', `${Math.min(80, px)}px`, '--gap');
@@ -214,7 +205,6 @@ export function createHud(actors, onBuy) {
 			set(el.flash, 'fl', flash.toFixed(2), 'opacity');
 			set(el.scope, 'sc', !v.scoped, 'hidden');
 
-			// Plant / defuse progress.
 			if (v.using > 0) {
 				const total = v.team === TEAM.RAIDERS ? ROUND.plantTime : (v.kit ? ROUND.defuseKitTime : ROUND.defuseTime);
 				set(el.progress, 'pg', false, 'hidden');
@@ -222,7 +212,6 @@ export function createHud(actors, onBuy) {
 				set(el.progressLabel, 'plb', v.team === TEAM.RAIDERS ? 'Arming charge' : (v.kit ? 'Cutting wires (kit)' : 'Cutting wires'));
 			} else set(el.progress, 'pg', true, 'hidden');
 
-			// Context hint.
 			let hint = '';
 			if (!spectating && v.alive) {
 				if (buyOpen(state, v) && !this.buyVisible) hint = 'B  buy menu';
@@ -232,6 +221,8 @@ export function createHud(actors, onBuy) {
 			if (spectating) hint = 'Click: next teammate';
 			set(el.hint, 'hi', hint);
 
+			radioT -= dt;
+			if (radioT <= 0 && !el.radio.hidden) el.radio.hidden = true;
 			messageT -= dt;
 			if (messageT <= 0 && !el.center.parentElement.hidden) el.center.parentElement.hidden = true;
 

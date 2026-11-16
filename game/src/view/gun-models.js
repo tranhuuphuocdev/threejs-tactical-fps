@@ -29,19 +29,19 @@ function wearTexture() {
 
 export function createGunMaterials() {
 	const wear = wearTexture();
-	const std = (color, roughness, metalness, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness, metalness, roughnessMap: wear, bumpMap: wear, bumpScale: 0.25, ...extra });
+	const std = (color, roughness, metalness, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness, metalness, roughnessMap: wear, bumpMap: wear, bumpScale: 0.04, ...extra });
 	return {
 		metal: std(PALETTE.gunmetal, 0.55, 0.85),
 		steel: std('#8b9298', 0.4, 0.9),
 		dark: std('#141619', 0.6, 0.7),
 		polymer: std('#2c3034', 0.95, 0.05),
 		tan: std('#8f7a5a', 0.9, 0.05),
-		grip: std('#26231f', 1, 0, { bumpScale: 0.6 }),
+		grip: std('#26231f', 1, 0, { bumpScale: 0.3 }),
 		olive: std('#4f5a3a', 0.85, 0.1),
 		accent: new THREE.MeshStandardMaterial({ color: PALETTE.accent, roughness: 0.6, emissive: PALETTE.accent, emissiveIntensity: 0.2 }),
 		lens: new THREE.MeshStandardMaterial({ color: '#203a44', roughness: 0.05, metalness: 0.3, emissive: '#0c3a2a', emissiveIntensity: 0.4 }),
-		glove: std('#2a2925', 0.95, 0, { bumpScale: 0.8 }),
-		sleeve: std(PALETTE.raidersDark, 1, 0, { bumpScale: 1 }),
+		glove: std('#2a2925', 0.95, 0, { bumpScale: 0.3 }),
+		sleeve: std(PALETTE.raidersDark, 1, 0, { bumpScale: 0.3 }),
 	};
 }
 
@@ -101,32 +101,23 @@ function hands(g, mats, gripX, foreX) {
 function longGun(mats, o) {
 	const g = new THREE.Group();
 	const body = mats[o.body];
-	// Upper receiver with a chamfered nose and an ejection port on the right.
 	add(g, profile([[-0.13, 0], [o.recv, 0], [o.recv + 0.012, 0.022], [o.recv, 0.052], [-0.11, 0.052], [-0.13, 0.04]], 0.046), mats.metal);
 	add(g, profile([[-0.03, 0.012], [0.05, 0.012], [0.05, 0.035], [-0.03, 0.035]], 0.004, 0.001), mats.dark, 0.024, 0, 0);
-	// Lower receiver and mag well.
 	add(g, profile([[-0.07, -0.032], [0.11, -0.032], [0.115, 0.001], [-0.07, 0.001]], 0.04), body);
-	// Pistol grip, raked back.
 	add(g, profile([[-0.065, -0.028], [-0.02, -0.028], [-0.035, -0.125], [-0.082, -0.12]], 0.036, 0.006), mats.grip);
-	// Trigger guard.
 	add(g, profile([[-0.02, -0.03], [0.05, -0.03], [0.05, -0.058], [-0.02, -0.058], [-0.02, -0.052], [0.044, -0.052], [0.044, -0.036], [-0.02, -0.036]], 0.01, 0.001), body);
-	// Stock.
 	if (o.stock > 0) {
 		add(g, profile([[-0.12, 0.045], [-0.12 - o.stock, 0.04], [-0.12 - o.stock, -0.075], [-0.1 - o.stock, -0.08], [-0.14, -0.012]], 0.04, 0.008), body);
 		add(g, profile([[-0.12 - o.stock, 0.04], [-0.135 - o.stock, 0.04], [-0.135 - o.stock, -0.08], [-0.12 - o.stock, -0.08]], 0.044, 0.006), mats.grip);
 	}
-	// Magazine: a curved box mag (more curve on the assault rifle).
 	const c = o.magCurve;
 	add(g, profile([[0.0, -0.03], [0.07, -0.03], [0.072 + c, -0.09], [0.075 + c * 2.2, -0.03 - o.mag], [0.02 + c * 2.2, -0.035 - o.mag], [0.004 + c, -0.09]], 0.026, 0.004), mats.dark);
-	// Handguard (octagonal, railed look), barrel and muzzle device.
 	const hgEnd = o.recv + o.guard;
 	add(g, tube(0.028, o.recv, hgEnd, 8), body, 0, 0.022, 0).rotation.z = Math.PI / 8;
 	add(g, tube(0.011, hgEnd, hgEnd + o.barrel), mats.steel, 0, 0.026, 0);
 	add(g, tube(0.017, hgEnd + o.barrel, hgEnd + o.barrel + 0.05, 6), mats.dark, 0, 0.026, 0);
-	// Top rail with slots.
 	add(g, profile([[-0.11, 0.052], [hgEnd - 0.02, 0.052], [hgEnd - 0.02, 0.064], [-0.11, 0.064]], 0.022, 0.002), mats.dark);
 	for (let x = -0.09; x < hgEnd - 0.04; x += 0.024) add(g, new THREE.BoxGeometry(0.024, 0.004, 0.008), mats.metal, 0, 0.066, -x);
-	// Optic: a scope tube with lenses, or a red-dot housing.
 	if (o.scope) {
 		add(g, tube(0.026, -0.08, 0.17, 20), mats.dark, 0, 0.11, 0);
 		add(g, tube(0.034, 0.12, 0.2, 20), mats.dark, 0, 0.11, 0);
@@ -136,7 +127,6 @@ function longGun(mats, o) {
 		add(g, profile([[-0.02, 0.064], [0.045, 0.064], [0.04, 0.108], [-0.015, 0.108]], 0.034, 0.005), mats.dark);
 		add(g, tube(0.013, 0.039, 0.041, 16), mats.lens, 0, 0.088, 0);
 	}
-	// Front sight post on the gas block.
 	add(g, profile([[hgEnd - 0.01, 0.04], [hgEnd + 0.02, 0.04], [hgEnd + 0.015, 0.075], [hgEnd, 0.075]], 0.012, 0.002), mats.dark);
 	hands(g, mats, -0.045, o.recv + o.guard * 0.55);
 	g.userData.muzzle = new THREE.Vector3(0, 0.026, -(hgEnd + o.barrel + 0.06));
@@ -147,7 +137,6 @@ function longGun(mats, o) {
 function sidearm(mats, k, slideMat) {
 	const g = new THREE.Group();
 	const L = 0.19 * k;
-	// Slide with front and rear serrations, frame with dust-cover rail, raked grip.
 	add(g, profile([[-0.02, 0.006], [L - 0.005, 0.006], [L, 0.018], [L - 0.006, 0.034], [0.0, 0.034], [-0.02, 0.026]].map(([x, y]) => [x, y * k]), 0.03 * k, 0.003), mats[slideMat]);
 	for (let i = 0; i < 6; i += 1) add(g, new THREE.BoxGeometry(0.032 * k, 0.016 * k, 0.0025), mats.dark, 0, 0.022 * k, (0.002 + i * 0.006) * k);
 	add(g, profile([[0.0, -0.016], [L - 0.02, -0.016], [L - 0.02, 0.006], [0.0, 0.006]].map(([x, y]) => [x, y * k]), 0.028 * k, 0.003), mats.polymer);

@@ -70,7 +70,6 @@ function buildFigure(shared) {
 	parts.brim = mesh(GEO.brim, null, 0, 0.16, -0.17, neck);
 	parts.hood = mesh(GEO.hood, null, 0, 0.12, 0.02, neck);
 	parts.helmet = mesh(GEO.helmet, shared.helmet, 0, 0.12, 0, neck);
-	// Arms reach forward to a gun held at the shoulder.
 	const arms = new THREE.Group(); arms.position.y = 0.48; torso.add(arms);
 	parts.arms = arms;
 	for (const side of [-1, 1]) {
@@ -102,7 +101,6 @@ export function createBodies(scene, actors) {
 	});
 	let paintedSides = -1;
 
-	// Dress each figure in its side's colours and headgear (sides swap at halftime).
 	function paint() {
 		figures.forEach((f, i) => {
 			const t = teams[actors[i].team];
@@ -123,7 +121,7 @@ export function createBodies(scene, actors) {
 			const f = figures[i];
 			f.root.visible = !(a.isPlayer && hidePlayer);
 			if (!f.root.visible) continue;
-			f.root.position.lerpVectors(a.prevPos, a.pos, alpha);
+			f.root.position.copy(a.viewPos);
 			let yawDelta = a.yaw - a.prevYaw;
 			if (yawDelta > Math.PI) yawDelta -= Math.PI * 2; else if (yawDelta < -Math.PI) yawDelta += Math.PI * 2;
 			f.root.rotation.y = -(a.prevYaw + yawDelta * alpha);
@@ -135,7 +133,6 @@ export function createBodies(scene, actors) {
 			f.pistol.visible = !primary && a.alive;
 
 			if (!a.alive) {
-				// Fall away from the killing shot over a third of a second, then lie still.
 				const t = Math.min(1, (time - a.deathTime) / 0.35);
 				const ease = 1 - (1 - t) * (1 - t);
 				f.root.rotation.y = -a.deathYaw;
@@ -146,24 +143,20 @@ export function createBodies(scene, actors) {
 				continue;
 			}
 			f.lean.rotation.x = 0; f.lean.position.y = 0;
-			// Walk cycle: leg swing proportional to speed, phase from distance travelled.
 			const speed = Math.hypot(a.vel.x, a.vel.z);
 			const swing = Math.min(1, speed / MOVE.runSpeed) * 0.7;
 			const phase = time * (4 + speed * 1.4) + i;
 			f.legL.rotation.x = Math.sin(phase) * swing;
 			f.legR.rotation.x = -Math.sin(phase) * swing;
-			// Crouch: hips drop and legs fold forward; the torso pitches with the aim.
 			const c = a.crouchAmount;
 			f.hips.position.y = 0.86 - c * 0.42;
 			f.legL.rotation.x -= c * 0.9; f.legR.rotation.x -= c * 0.4;
 			f.torso.rotation.x = c * 0.15;
 			f.arms.rotation.x = a.pitch * 0.9;
 			f.neck.rotation.x = a.pitch * 0.5;
-			// Planting or defusing: kneel with arms down.
 			if (a.using > 0) f.arms.rotation.x = -0.8;
 		}
 	}
 
-	// Ten figures' meshes for a one-off shader compile at load.
 	return { update, figures, root: figures.map((f) => f.root), materials: { teams, shared } };
 }

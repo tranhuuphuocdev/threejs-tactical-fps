@@ -34,6 +34,7 @@ export function createActor(id, squad, isPlayer, name) {
 		health: 100, armor: 0, helmet: false, kit: false,
 		money: 0,
 		pos: new THREE.Vector3(), prevPos: new THREE.Vector3(), vel: new THREE.Vector3(),
+		viewPos: new THREE.Vector3(),   // where the renderer drew it last frame (hit tests use it)
 		onGround: true,
 		yaw: 0, pitch: 0, prevYaw: 0,
 		punchPitch: 0, punchYaw: 0, shotsFired: 0, // recoil: view punch and the spray index

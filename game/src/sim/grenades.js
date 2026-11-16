@@ -30,14 +30,12 @@ export function createGrenadeSystem() {
 		for (const s of smokes) s.active = false;
 	}
 
-	// Current radius of a smoke: it blooms over its first second and thins out at the end.
 	function smokeRadius(s) {
 		const grow = Math.min(1, s.age / 1.1);
 		const fade = Math.min(1, (s.life - s.age) / 1.5);
 		return s.radius * grow * Math.max(0, fade);
 	}
 
-	// Does the segment a-b pass through any smoke? Used by bot sight.
 	function blocksSight(ax, ay, az, bx, by, bz) {
 		for (const s of smokes) {
 			if (!s.active) continue;
@@ -76,7 +74,6 @@ export function createGrenadeSystem() {
 		const dx = g.vel.x / speed; const dy = g.vel.y / speed; const dz = g.vel.z / speed;
 		const t = state.collision.raycast(g.pos.x, g.pos.y, g.pos.z, dx, dy, dz, travel + GRENADE_THROW.radius, n);
 		if (t <= travel + GRENADE_THROW.radius) {
-			// Bounce: reflect about the face normal, lose energy, and roll along the floor.
 			g.pos.set(g.pos.x + dx * Math.max(0, t - GRENADE_THROW.radius), g.pos.y + dy * Math.max(0, t - GRENADE_THROW.radius), g.pos.z + dz * Math.max(0, t - GRENADE_THROW.radius));
 			const vn = g.vel.dot(n);
 			g.vel.addScaledVector(n, -2 * vn).multiplyScalar(GRENADE_THROW.bounce);
@@ -110,7 +107,6 @@ export function createGrenadeSystem() {
 			const d = Math.hypot(cx - g.pos.x, cy - g.pos.y, cz - g.pos.z);
 			if (d > spec.radius) continue;
 			if (!state.collision.segmentClear(g.pos.x, g.pos.y + 0.2, g.pos.z, cx, cy, cz)) continue;
-			// Friendly blast hurts at a third; your own frag hurts you fully.
 			const friendly = owner && a.team === owner.team && a !== owner;
 			const falloff = 1 - d / spec.radius;
 			const dmg = spec.damage * falloff * falloff * (friendly ? 0.33 : 1);

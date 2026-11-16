@@ -11,7 +11,6 @@ export function createNav() {
 	for (let r = 0; r < DEPTH; r += 1) {
 		for (let c = 0; c < COLS; c += 1) walkable[r * COLS + c] = ROWS[r][c] in SOLID_HEIGHT ? 0 : 1;
 	}
-	// A cell next to a wall costs a little more, so bots keep off the walls and round corners wide.
 	const extra = new Float32Array(N);
 	for (let r = 1; r < DEPTH - 1; r += 1) {
 		for (let c = 1; c < COLS - 1; c += 1) {
@@ -59,7 +58,6 @@ export function createNav() {
 		return r * COLS + c;
 	}
 
-	// Nearest walkable cell to a point (a bot pushed into a crate corner still finds a way out).
 	function nearestWalkable(index) {
 		if (walkable[index]) return index;
 		const c0 = index % COLS; const r0 = (index / COLS) | 0;
@@ -74,7 +72,6 @@ export function createNav() {
 		return index;
 	}
 
-	// Line of walkable cells between two points, sampled every half cell, with a body's margin.
 	function clearLine(ax, az, bx, bz) {
 		const dx = bx - ax; const dz = bz - az;
 		const steps = Math.ceil(Math.hypot(dx, dz) / (CELL * 0.25));
@@ -89,7 +86,6 @@ export function createNav() {
 		return true;
 	}
 
-	// Find a path; out is an array of {x, z} objects reused across calls. Returns the point count.
 	function findPath(sx, sz, tx, tz, out) {
 		search += 1;
 		const base = search * 2;
@@ -131,7 +127,6 @@ export function createNav() {
 		if (!reached) return 0;
 		let count = 0;
 		for (let n = goal; n !== -1; n = parent[n]) cells[count++] = n;
-		// String pulling: from the current anchor, skip ahead to the farthest cell still in clear line.
 		let written = 0;
 		let ax = sx; let az = sz;
 		let i = count - 1;

@@ -26,7 +26,6 @@ export function applyDamage(state, victim, attacker, weaponId, base, zone, armor
 		victim.damageYaw = Math.atan2(attacker.pos.x - victim.pos.x, -(attacker.pos.z - victim.pos.z));
 		attacker.roundDamage += dealt;
 	}
-	// Getting shot slows you (tagging): a hit body loses most of its speed for a moment.
 	victim.vel.x *= 0.45; victim.vel.z *= 0.45;
 	if (victim.using > 0 && !victim.isPlayer) victim.using = 0;
 
@@ -52,7 +51,6 @@ export function kill(state, victim, attacker, weaponId, headshot) {
 		const reward = WEAPONS[weaponId]?.kill ?? (GRENADES[weaponId] ? 300 : 300);
 		attacker.money = Math.min(ECONOMY.max, attacker.money + reward);
 	}
-	// A fallen carrier drops the charge where they stand.
 	if (victim.hasCharge) {
 		victim.hasCharge = false;
 		const c = state.charge;

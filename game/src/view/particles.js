@@ -67,7 +67,6 @@ export function createParticles(scene, texture, capacity, additive) {
 
 	const color = new THREE.Color();
 
-	// Spawn one particle. colorHex: a THREE.Color-compatible hex number.
 	function emit(x, y, z, vx, vy, vz, s, growth, lifetime, colorHex, a, dragK, grav) {
 		if (count >= capacity) return;
 		const i = count++;
@@ -105,7 +104,6 @@ export function createParticles(scene, texture, capacity, additive) {
 			if (pos[i3 + 1] < 0.02) { pos[i3 + 1] = 0.02; vel[i3 + 1] *= -0.3; }
 			const t = age[i] / life[i];
 			size[i] = startSize[i] * (1 + grow[i] * t);
-			// Fade in quickly, out slowly.
 			alpha[i] = startAlpha[i] * Math.min(1, t * 12) * (1 - t * t);
 			i += 1;
 		}

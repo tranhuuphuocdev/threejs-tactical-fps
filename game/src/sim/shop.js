@@ -31,7 +31,6 @@ export function inBuyZone(actor) {
 	const ch = ROWS[r]?.[c];
 	const own = actor.team === TEAM.RAIDERS ? 'T' : 'D';
 	if (ch === own) return true;
-	// The spawn yards around the marked cells count too: within 10 m of the spawn's centre row.
 	const spawnRow = actor.team === TEAM.RAIDERS ? 28 : 2;
 	return Math.abs(r - spawnRow) <= 3;
 }

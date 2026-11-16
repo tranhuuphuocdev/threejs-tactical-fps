@@ -56,7 +56,6 @@ export function stepObjective(state, dt) {
 		c.fuse -= dt;
 		c.beep -= dt;
 		if (c.beep <= 0) {
-			// Beeps quicken as the fuse burns: from every second down to ten a second.
 			c.beep = Math.max(0.1, Math.min(1, c.fuse / ROUND.fuseTime) * 1.0);
 			const e = state.events.emit('beep'); e.x = c.pos.x; e.y = c.pos.y; e.z = c.pos.z; e.amount = c.fuse;
 		}

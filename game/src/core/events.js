@@ -24,7 +24,6 @@ export function createEventQueue() {
 		return record;
 	}
 
-	// Visit every pending record, then empty the ring.
 	function drain(visit) {
 		for (let i = 0; i < count; i += 1) visit(ring[(head + i) % CAPACITY]);
 		head = 0; count = 0;

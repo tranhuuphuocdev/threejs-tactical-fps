@@ -57,7 +57,6 @@ function concrete(anisotropy) {
 	for (const [x, y] of [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]]) {
 		ctx.beginPath(); ctx.arc(x * size, y * size, 5, 0, Math.PI * 2); ctx.fill();
 	}
-	// Salt bloom along the base of each panel.
 	const grad = ctx.createLinearGradient(0, size, 0, size * 0.8);
 	grad.addColorStop(0, 'rgba(240,236,226,0.45)'); grad.addColorStop(1, 'rgba(240,236,226,0)');
 	ctx.globalAlpha = 1; ctx.fillStyle = grad; ctx.fillRect(0, size * 0.8, size, size * 0.2);
@@ -141,17 +140,6 @@ function siteLetter(letter, anisotropy) {
 	return finish(el, anisotropy, false);
 }
 
-// Painted wayfinding signs: an arrow and a place name.
-function sign(text, anisotropy) {
-	const w = 512; const h = 128; const el = document.createElement('canvas'); el.width = w; el.height = h;
-	const ctx = el.getContext('2d');
-	ctx.fillStyle = PALETTE.signBg; ctx.fillRect(0, 0, w, h);
-	ctx.fillStyle = PALETTE.accent; ctx.fillRect(0, 0, 16, h);
-	ctx.fillStyle = PALETTE.salt; ctx.font = '700 58px system-ui, -apple-system, sans-serif';
-	ctx.textBaseline = 'middle'; ctx.fillText(text, 40, h / 2 + 3);
-	return finish(el, anisotropy, false);
-}
-
 // A soft round puff for smoke, dust and sparks (white, tinted per material).
 function puff() {
 	const size = 128; const [el, ctx] = canvas(size);
@@ -172,7 +160,6 @@ export function createTextures(renderer) {
 		pallet: pallet(anisotropy),
 		letterA: siteLetter('A', anisotropy),
 		letterB: siteLetter('B', anisotropy),
-		sign: (text) => sign(text, anisotropy),
 		puff: puff(),
 	};
 }

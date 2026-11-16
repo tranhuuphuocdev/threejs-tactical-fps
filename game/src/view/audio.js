@@ -19,7 +19,6 @@ function noiseBuffer(ctx, seconds, shape) {
 }
 
 function gunshot(ctx, pitch, body) {
-	// A sharp crack (bright noise, fast decay) over a low thump (a falling sine), with a tail.
 	return noiseBuffer(ctx, 0.5, (t, w, last) => {
 		const crack = w * Math.exp(-t * 55 * pitch);
 		const thump = Math.sin(2 * Math.PI * (95 * pitch) * t * (1 - t * 1.2)) * Math.exp(-t * 18) * 0.9 * body;
@@ -63,7 +62,6 @@ export function createAudio() {
 		listenerReady = true;
 	}
 
-	// Play a buffer; with a position it is panned and attenuated in 3D, else heard flat.
 	function play(name, volume = 1, x = null, y = 0, z = 0, rate = 1) {
 		if (!ctx || !buffers[name]) return;
 		const src = ctx.createBufferSource();
@@ -99,7 +97,6 @@ export function createAudio() {
 		}
 	}
 
-	// Map simulation events to sounds. playerId hears its own actions flat and loud.
 	function onEvent(e, playerId) {
 		if (!ctx) return;
 		const own = e.actor === playerId;

@@ -27,7 +27,7 @@ export const ROWS = [
 	'#......#######............#######......#',
 	'#......#######..CC........#######...CC.#',
 	'#.cc...#######..CC........#######......#',
-	'#......#######............#######......#',
+	'#......#######....CCCC....#######......#',
 	'#......#######........cc..#######......#',
 	'#......#######............#######cc....#',
 	'#......#######....cc......#######......#',
@@ -68,6 +68,13 @@ export const CALLOUTS = [
 	{ name: 'Loading Dock', c0: 1, r0: 26, c1: 38, r1: 30 },
 ];
 
+// The named place a world position is in ('' between places), for the HUD and bot radio calls.
+export function calloutAt(x, z) {
+	const c = x / CELL; const r = z / CELL;
+	for (const area of CALLOUTS) if (c >= area.c0 && c < area.c1 + 1 && r >= area.r0 && r < area.r1 + 1) return area.name;
+	return '';
+}
+
 // Where each side holds when defending, and the angle it watches (radians, 0 = north, clockwise).
 // Each entry: [col, row, yaw]. Attackers pick lanes; defenders take these posts.
 export const POSTS = {
@@ -80,11 +87,11 @@ export const POSTS = {
 export const LANES = {
 	A: {
 		long: [[4, 26], [4, 18], [4, 11], [4, 8]],
-		short: [[19, 24], [19, 16], [15, 12], [9, 11], [8, 7]],
+		short: [[19, 24], [18, 17], [15, 12], [9, 11], [8, 7]],
 	},
 	B: {
 		long: [[35, 26], [35, 18], [35, 11], [35, 8]],
-		short: [[20, 24], [20, 16], [24, 12], [30, 11], [31, 7]],
+		short: [[20, 24], [21, 17], [24, 12], [30, 11], [31, 7]],
 	},
 	mid: [[19, 24], [19, 14], [19, 11], [19, 7]],
 };

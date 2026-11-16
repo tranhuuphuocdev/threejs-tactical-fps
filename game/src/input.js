@@ -10,9 +10,15 @@ export function createInput(element, onLockChange) {
 		locked: false, sensitivity: 0.0022, wheel: 0,
 	};
 
+	// Raw input where supported, plain lock otherwise. A refusal (asked too soon after leaving the
+	// lock) is harmless: the next click on the canvas asks again.
 	function requestLock() {
-		const ask = element.requestPointerLock?.({ unadjustedMovement: true });
-		if (ask && typeof ask.catch === 'function') ask.catch(() => element.requestPointerLock());
+		const plain = () => Promise.resolve(element.requestPointerLock?.()).catch(() => {});
+		try {
+			Promise.resolve(element.requestPointerLock?.({ unadjustedMovement: true })).catch((err) => {
+				if (err?.name === 'NotSupportedError') plain();
+			});
+		} catch { plain(); }
 	}
 
 	document.addEventListener('pointerlockchange', () => {
@@ -49,7 +55,6 @@ export function createInput(element, onLockChange) {
 		requestLock,
 		exitLock: () => document.exitPointerLock?.(),
 		down: (code) => keys.has(code),
-		// True once per press; the simulation calls it so a tap between ticks is never lost.
 		took: (code) => {
 			if (!pressed.has(code)) return false;
 			pressed.delete(code);

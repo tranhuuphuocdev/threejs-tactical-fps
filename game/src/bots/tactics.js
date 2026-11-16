@@ -9,7 +9,7 @@ import { buy } from '../sim/shop.js';
 import { siteAt } from '../sim/objective.js';
 
 export function createTactics() {
-	return { site: 'A', rotateTo: '', rushed: false, think: 0 };
+	return { site: 'A', rotateTo: '', rushed: false, think: 0, lastRadio: [-99, -99] };
 }
 
 const toPoint = ([c, r]) => ({ x: (c + 0.5) * CELL, z: (r + 0.5) * CELL });
@@ -29,7 +29,6 @@ function bestBuy(state, bot) {
 	} else if (m >= 1500 && state.round.number > 1) {
 		b('anvil'); b('vest');
 	}
-	// Utility with what is left, keeping a little back.
 	if (bot.money >= 600) b(state.random() < 0.5 ? 'smoke' : 'flash');
 	if (bot.money >= 500) b('frag');
 	if (bot.team === TEAM.WARDENS && bot.money >= 900) b('kit');
@@ -83,7 +82,6 @@ export function stepTactics(state, dt) {
 	const round = state.round;
 	if (round.phase !== 'live') return;
 
-	// Wardens: rotate to a site where two or more Raiders were seen in the last few seconds.
 	const board = state.intel[TEAM.WARDENS];
 	const seen = { A: 0, B: 0 };
 	for (const a of state.actors) {
@@ -96,6 +94,8 @@ export function stepTactics(state, dt) {
 	const hot = seen.A >= 2 ? 'A' : seen.B >= 2 ? 'B' : '';
 	if (hot && t.rotateTo !== hot) {
 		t.rotateTo = hot;
+		const e = state.events.emit('radio');
+		e.actor = -1; e.other = TEAM.WARDENS; e.text = `They're hitting Pump ${hot}, rotating`;
 		for (const bot of state.actors) {
 			if (!bot.brain || bot.team !== TEAM.WARDENS || !bot.alive) continue;
 			if (bot.brain.area === hot) continue;
@@ -106,7 +106,6 @@ export function stepTactics(state, dt) {
 		}
 	}
 
-	// Raiders: late in the round, everyone goes straight for the site.
 	if (!t.rushed && round.timer < 40) {
 		t.rushed = true;
 		for (const bot of state.actors) {
