@@ -40,7 +40,7 @@ const bucket = () => ({ positions: [], normals: [], uvs: [], indices: [] });
 
 // Golden hour: the sun sits low in the west-south-west, so walls throw long shadows across the
 // lanes. One direction drives the light, the sky's glow and the reflection environment.
-export const SUN_DIR = new THREE.Vector3(-0.7, 0.4, 0.6).normalize();
+const SUN_DIR = new THREE.Vector3(-0.7, 0.4, 0.6).normalize();
 
 // Sky dome: a gradient from a hot horizon to a cool zenith, with a glow around the sun.
 function skyDome(radius) {

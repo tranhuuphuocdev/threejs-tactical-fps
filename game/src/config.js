@@ -1,16 +1,13 @@
 // Every tuning number of SALTLINE in one place: simulation rate, movement, round rules,
 // economy, the arsenal and the bots. Systems read from here; nothing else holds magic numbers.
 
-export const SIM_HZ = 60;
+const SIM_HZ = 60;
 export const DT = 1 / SIM_HZ;
 
 export const TEAM = Object.freeze({ RAIDERS: 0, WARDENS: 1 });
 export const TEAM_NAME = ['Raiders', 'Wardens'];
 export const TEAM_SIZE = 5;
 
-// Raiders attack: they carry the breach charge to a pump station and hold it until it blows.
-// Wardens defend: they stop the plant, or cut the charge before its fuse runs out.
-export const ROLE = Object.freeze({ ATTACK: 'attack', DEFEND: 'defend' });
 
 export const MOVE = Object.freeze({
 	runSpeed: 6.2,          // m/s with a knife-light load; weapons scale it down
@@ -112,9 +109,6 @@ export const WEAPONS = Object.freeze({
 	},
 });
 
-export const PRIMARIES = ['wasp', 'kestrel', 'harrow', 'longwatch'];
-export const SIDEARMS = ['hornet', 'anvil'];
-
 export const GRENADES = Object.freeze({
 	frag: { id: 'frag', name: 'Frag', price: 300, fuse: 1.7, damage: 100, radius: 7.5 },
 	smoke: { id: 'smoke', name: 'Smoke', price: 300, fuse: 1.6, duration: 16, radius: 4.6 },
@@ -125,7 +119,7 @@ export const GRENADE_THROW = Object.freeze({ speed: 17, upward: 3.2, bounce: 0.4
 export const GEAR = Object.freeze({
 	vest: { id: 'vest', name: 'Plate vest', price: 650 },
 	helmet: { id: 'helmet', name: 'Vest + helmet', price: 1000 },
-	kit: { id: 'kit', name: 'Cutter kit', price: 400, team: ROLE.DEFEND },
+	kit: { id: 'kit', name: 'Cutter kit', price: 400 },             // Wardens only
 });
 
 // Damage taken through armour: the armour soaks (1 - armorPen) of a body hit and loses half of

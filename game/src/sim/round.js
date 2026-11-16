@@ -1,6 +1,6 @@
 // The round and the match: freeze and buy, the live round, the planted fuse, the end of round
 // pause, round-win money and the loss streak, sides swapping at halftime, and the match point.
-import { ROUND, ECONOMY, TEAM, TEAM_NAME } from '../config.js';
+import { ROUND, ECONOMY, TEAM } from '../config.js';
 import { CELL, ROWS } from '../map/layout.js';
 import { giveWeapon } from '../core/actors.js';
 
@@ -8,8 +8,6 @@ const SPAWNS = { T: [], D: [] };
 ROWS.forEach((row, r) => {
 	for (let c = 0; c < row.length; c += 1) if (row[c] === 'T' || row[c] === 'D') SPAWNS[row[c]].push([c, r]);
 });
-
-export function sideName(team) { return TEAM_NAME[team]; }
 
 export function createRound() {
 	return {

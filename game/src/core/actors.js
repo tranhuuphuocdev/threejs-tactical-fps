@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { WEAPONS, MOVE, TEAM_SIZE } from '../config.js';
 
-export function createWeaponSlot() {
+function createWeaponSlot() {
 	return { def: null, mag: 0, reserve: 0 };
 }
 
@@ -26,7 +26,7 @@ function createIntent() {
 	};
 }
 
-export function createActor(id, squad, isPlayer, name) {
+function createActor(id, squad, isPlayer, name) {
 	return {
 		id, squad, isPlayer, name,
 		team: 0,                    // current side: TEAM.RAIDERS or TEAM.WARDENS (swaps at halftime)

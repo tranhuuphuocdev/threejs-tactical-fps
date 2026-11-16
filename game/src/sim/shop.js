@@ -26,7 +26,7 @@ export function nameOf(id) {
 	return (WEAPONS[id] ?? GRENADES[id] ?? GEAR[id]).name;
 }
 
-export function inBuyZone(actor) {
+function inBuyZone(actor) {
 	const c = Math.floor(actor.pos.x / CELL); const r = Math.floor(actor.pos.z / CELL);
 	const ch = ROWS[r]?.[c];
 	const own = actor.team === TEAM.RAIDERS ? 'T' : 'D';

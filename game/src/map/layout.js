@@ -54,7 +54,7 @@ export const SOLID_HEIGHT = { '#': 5, C: 2.2, c: 1.0 };
 export const OUTER_WALL_HEIGHT = 7;
 
 // Named places, in cell coordinates (col, row). Bots route between them and the HUD calls them out.
-export const CALLOUTS = [
+const CALLOUTS = [
 	{ name: 'Pump A', c0: 1, r0: 1, c1: 10, r1: 9 },
 	{ name: 'Pump B', c0: 29, r0: 1, c1: 38, r1: 9 },
 	{ name: 'Control Yard', c0: 11, r0: 1, c1: 28, r1: 5 },
@@ -96,5 +96,3 @@ export const LANES = {
 	mid: [[19, 24], [19, 14], [19, 11], [19, 7]],
 };
 
-// The charge's plant zone in each site: cells of 'a' or 'b'.
-export const SITE_CHAR = { A: 'a', B: 'b' };

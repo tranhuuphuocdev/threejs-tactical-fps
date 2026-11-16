@@ -53,7 +53,7 @@ function bodyPosition(shooter, target) {
 const zoneHit = { zone: -1 };
 
 // Test one body; returns the entry distance and writes the zone index to hit.zone.
-export function rayBody(ox, oy, oz, dx, dy, dz, px, py, pz, height, maxT, hit) {
+function rayBody(ox, oy, oz, dx, dy, dz, px, py, pz, height, maxT, hit) {
 	const s = height / MOVE.standHeight;
 	if (rayCylinder(ox, oy, oz, dx, dy, dz, px, pz, 0.45, py, py + height + 0.1, maxT) < 0) return -1;
 	let best = maxT; let zone = -1;
