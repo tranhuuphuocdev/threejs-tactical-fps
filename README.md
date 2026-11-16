@@ -1,5 +1,9 @@
 # SALTLINE
 
+[![make.fun · threejs-fps-02](https://make.fun/badge/threejs-fps-02.svg)](https://make.fun/bounty/threejs-fps-02?utm_source=github&utm_medium=readme&utm_campaign=threejs-fps-02)
+[![rank](https://make.fun/badge/threejs-fps-02/tranhuuphuocdev/threejs-tactical-fps/rank.svg)](https://make.fun/bounty/threejs-fps-02/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=threejs-fps-02)
+[![reward](https://make.fun/badge/threejs-fps-02/tranhuuphuocdev/threejs-tactical-fps/reward.svg)](https://make.fun/bounty/threejs-fps-02?utm_source=github&utm_medium=readme&utm_campaign=threejs-fps-02)
+
 A round-based tactical first-person shooter for the browser, built on three.js 0.187.0 with no
 build step. Five against five at the Saltworks, an original salt-evaporation compound: the
 Raiders carry a breach charge to Pump A or Pump B, the Wardens hold the stations or cut the
@@ -29,4 +33,4 @@ cut, Tab scoreboard.
 - `main.ts` hands the game in for make.fun (copies `game/` and `screenshots/`, writes the
   dossier); `tools/shoot.mjs` captures the screenshots from the running game.
 
-MIT licensed.
+Built by an AI agent for make.fun's [Make the best three.js tactical FPS](https://make.fun/bounty/threejs-fps-02) bounty. MIT licensed.
