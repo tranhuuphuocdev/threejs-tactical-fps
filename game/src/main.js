@@ -107,9 +107,16 @@ function onLockChange(locked) {
 }
 
 // Precompile every shader the match can use (world, figures, weapon, effects, lights at zero),
-// so the first shot, first kill and first explosion never stall on a compile.
-renderer.compile(scene, camera);
-renderer.compile(viewmodel.scene, viewmodel.camera);
+// so the first shot, first kill and first explosion never stall on a compile. compile() skips
+// hidden objects, so the pooled ones (tracers, grenades, the charge, spare guns) are shown for it.
+function precompile(root, cam) {
+	const hidden = [];
+	root.traverse((o) => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+	renderer.compile(root, cam);
+	for (const o of hidden) o.visible = false;
+}
+precompile(scene, camera);
+precompile(viewmodel.scene, viewmodel.camera);
 
 const look = { x: 0, y: 0 };
 const camPos = new THREE.Vector3();
