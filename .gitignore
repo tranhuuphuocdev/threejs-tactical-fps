@@ -1,0 +1,8 @@
+threejs-fps-02-kit/
+makefun-keypair.json
+login.log
+out/
+.shots/
+*.tar.gz
+.DS_Store
+node_modules/
